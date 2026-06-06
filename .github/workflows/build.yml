@@ -1,4 +1,4 @@
-name: Build
+﻿name: Build
 on: [push]
 
 jobs:
@@ -34,8 +34,8 @@ jobs:
 
       - name: Build Python executables
         run: |
-          pyinstaller --onefile --name crawler veterinary_drug_crawler.py
-          pyinstaller --onefile --name service app.py
+          pyinstaller --onefile --name crawler --distpath dist veterinary_drug_crawler.py
+          pyinstaller --onefile --name service --distpath dist app.py
         shell: bash
 
       - name: Build macOS app
@@ -82,8 +82,8 @@ jobs:
 
       - name: Build Python executables
         run: |
-          pyinstaller --onefile --name crawler veterinary_drug_crawler.py
-          pyinstaller --onefile --name service app.py
+          pyinstaller --onefile --name crawler --distpath dist veterinary_drug_crawler.py
+          pyinstaller --onefile --name service --distpath dist app.py
         shell: pwsh
 
       - name: Build Windows app
