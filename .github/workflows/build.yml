@@ -18,7 +18,6 @@ jobs:
       - name: 配置国内 npm 镜像
         run: |
           npm config set registry https://registry.npmmirror.com
-          npm config set disturl https://npmmirror.com/dist
           npm config set electron_mirror https://npmmirror.com/mirrors/electron/
           npm config set electron_builder_binaries_mirror https://npmmirror.com/mirrors/electron-builder-binaries/
 
@@ -70,7 +69,6 @@ jobs:
       - name: 配置国内 npm 镜像
         run: |
           npm config set registry https://registry.npmmirror.com
-          npm config set disturl https://npmmirror.com/dist
           npm config set electron_mirror https://npmmirror.com/mirrors/electron/
           npm config set electron_builder_binaries_mirror https://npmmirror.com/mirrors/electron-builder-binaries/
 
