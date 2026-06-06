@@ -5,47 +5,46 @@ jobs:
   build-mac:
     runs-on: macos-latest
     steps:
-      - name: 妫€鍑轰唬鐮?
+      - name: Checkout code
         uses: actions/checkout@v4
         with:
           fetch-depth: 1
 
-      - name: 璁剧疆 Node.js 鐜
+      - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: '18'
 
-      - name: 閰嶇疆鍥藉唴 npm 闀滃儚
-        run: |
-          npm config set registry https://registry.npmmirror.com
+      - name: Configure npm registry
+        run: npm config set registry https://registry.npmmirror.com
 
-      - name: 瀹夎渚濊禆
+      - name: Install dependencies
         run: npm install
         env:
           ELECTRON_MIRROR: https://npmmirror.com/mirrors/electron/
           ELECTRON_BUILDER_BINARIES_MIRROR: https://npmmirror.com/mirrors/electron-builder-binaries/
 
-      - name: 閰嶇疆 Python 鍥藉唴闀滃儚
+      - name: Configure Python pip
         run: |
           pip config set global.index-url https://pypi.tuna.tsinghua.edu.cn/simple
           pip config set install.trusted-host pypi.tuna.tsinghua.edu.cn
 
-      - name: 瀹夎 Python 渚濊禆
+      - name: Install Python dependencies
         run: pip install requests beautifulsoup4 lxml pyinstaller --quiet
 
-      - name: 鎵撳寘 Python 鐖櫕鑴氭湰
+      - name: Build Python executables
         run: |
           pyinstaller --onefile --name crawler veterinary_drug_crawler.py
           pyinstaller --onefile --name service app.py
         shell: bash
 
-      - name: 鏋勫缓 macOS 搴旂敤
+      - name: Build macOS app
         run: npm run build:mac
         env:
           ELECTRON_MIRROR: https://npmmirror.com/mirrors/electron/
           ELECTRON_BUILDER_BINARIES_MIRROR: https://npmmirror.com/mirrors/electron-builder-binaries/
 
-      - name: 涓婁紶鏋勫缓浜х墿
+      - name: Upload macOS build
         uses: actions/upload-artifact@v4
         with:
           name: mac-build
@@ -54,47 +53,46 @@ jobs:
   build-win:
     runs-on: windows-latest
     steps:
-      - name: 妫€鍑轰唬鐮?
+      - name: Checkout code
         uses: actions/checkout@v4
         with:
           fetch-depth: 1
 
-      - name: 璁剧疆 Node.js 鐜
+      - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: '18'
 
-      - name: 閰嶇疆鍥藉唴 npm 闀滃儚
-        run: |
-          npm config set registry https://registry.npmmirror.com
+      - name: Configure npm registry
+        run: npm config set registry https://registry.npmmirror.com
 
-      - name: 瀹夎渚濊禆
+      - name: Install dependencies
         run: npm install
         env:
           ELECTRON_MIRROR: https://npmmirror.com/mirrors/electron/
           ELECTRON_BUILDER_BINARIES_MIRROR: https://npmmirror.com/mirrors/electron-builder-binaries/
 
-      - name: 閰嶇疆 Python 鍥藉唴闀滃儚
+      - name: Configure Python pip
         run: |
           pip config set global.index-url https://pypi.tuna.tsinghua.edu.cn/simple
           pip config set install.trusted-host pypi.tuna.tsinghua.edu.cn
 
-      - name: 瀹夎 Python 渚濊禆
+      - name: Install Python dependencies
         run: pip install requests beautifulsoup4 lxml pyinstaller --quiet
 
-      - name: 鎵撳寘 Python 鐖櫕鑴氭湰
+      - name: Build Python executables
         run: |
           pyinstaller --onefile --name crawler veterinary_drug_crawler.py
           pyinstaller --onefile --name service app.py
         shell: pwsh
 
-      - name: 鏋勫缓 Windows 搴旂敤
+      - name: Build Windows app
         run: npm run build:win
         env:
           ELECTRON_MIRROR: https://npmmirror.com/mirrors/electron/
           ELECTRON_BUILDER_BINARIES_MIRROR: https://npmmirror.com/mirrors/electron-builder-binaries/
 
-      - name: 涓婁紶鏋勫缓浜х墿
+      - name: Upload Windows build
         uses: actions/upload-artifact@v4
         with:
           name: win-build
