@@ -1,0 +1,85 @@
+name: Build
+
+on:
+  push:
+    branches: [ master ]
+
+jobs:
+  build-mac:
+    runs-on: macos-latest
+    steps:
+      - name: 检出代码
+        uses: actions/checkout@v3
+
+      - name: 设置 Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+
+      - name: 配置 npm 镜像
+        run: |
+          npm config set registry https://registry.npmmirror.com
+          npm config set electron_mirror https://npmmirror.com/mirrors/electron/
+          npm config set electron_builder_binaries_mirror https://npmmirror.com/mirrors/electron-builder-binaries/
+
+      - name: 安装依赖
+        run: npm install
+        env:
+          ELECTRON_MIRROR: https://npmmirror.com/mirrors/electron/
+
+      - name: 安装 Python 依赖
+        run: pip install requests beautifulsoup4 lxml --quiet
+
+      - name: 打包 Python 脚本
+        run: |
+          pyinstaller --onefile --name crawler veterinary_drug_crawler.py
+          pyinstaller --onefile --name service app.py
+        shell: bash
+
+      - name: 构建 macOS 应用
+        run: npm run build:mac
+
+      - name: 上传产物
+        uses: actions/upload-artifact@v3
+        with:
+          name: mac-build
+          path: release_new/*.dmg
+
+  build-win:
+    runs-on: windows-latest
+    steps:
+      - name: 检出代码
+        uses: actions/checkout@v3
+
+      - name: 设置 Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+
+      - name: 配置 npm 镜像
+        run: |
+          npm config set registry https://registry.npmmirror.com
+          npm config set electron_mirror https://npmmirror.com/mirrors/electron/
+
+      - name: 安装依赖
+        run: npm install
+        env:
+          ELECTRON_MIRROR: https://npmmirror.com/mirrors/electron/
+
+      - name: 安装 Python 依赖
+        run: pip install requests beautifulsoup4 lxml --quiet
+
+      - name: 打包 Python 脚本
+        run: |
+          pyinstaller --onefile --name crawler veterinary_drug_crawler.py
+          pyinstaller --onefile --name service app.py
+        shell: pwsh
+
+      - name: 构建 Windows 应用
+        run: npm run build:win
+
+      - name: 上传产物
+        uses: actions/upload-artifact@v3
+        with:
+          name: win-build
+          path: release_new/*.exe

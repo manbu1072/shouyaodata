@@ -1,0 +1,639 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>国家兽药基础数据库爬虫</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Microsoft YaHei', Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+            overflow: hidden;
+        }
+        
+        .header {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+        
+        .header h1 {
+            font-size: 28px;
+            margin-bottom: 10px;
+        }
+        
+        .header p {
+            font-size: 14px;
+            opacity: 0.9;
+        }
+        
+        .content {
+            display: flex;
+            padding: 20px;
+            gap: 20px;
+        }
+        
+        .left-panel {
+            flex: 1;
+            min-width: 300px;
+        }
+        
+        .right-panel {
+            flex: 2;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .panel-title {
+            font-size: 18px;
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #4facfe;
+        }
+        
+        .module-list {
+            max-height: 400px;
+            overflow-y: auto;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            padding: 10px;
+        }
+        
+        .module-item {
+            display: flex;
+            align-items: center;
+            padding: 10px;
+            margin: 5px 0;
+            background: #f5f5f5;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .module-item:hover {
+            background: #e8f4fd;
+        }
+        
+        .module-item.selected {
+            background: #4facfe;
+            color: white;
+        }
+        
+        .module-item input {
+            margin-right: 10px;
+            transform: scale(1.2);
+        }
+        
+        .module-item label {
+            cursor: pointer;
+            flex: 1;
+            font-size: 14px;
+        }
+        
+        .button-group {
+            margin-top: 20px;
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+        
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 5px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-weight: bold;
+        }
+        
+        .btn-primary {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(79, 172, 254, 0.4);
+        }
+        
+        .btn-primary:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+        
+        .btn-secondary {
+            background: #6c757d;
+            color: white;
+        }
+        
+        .btn-secondary:hover {
+            background: #5a6268;
+        }
+        
+        .log-container {
+            flex: 1;
+            background: #1e1e1e;
+            border-radius: 8px;
+            padding: 15px;
+            overflow-y: auto;
+            max-height: 500px;
+            font-family: 'Consolas', 'Courier New', monospace;
+            font-size: 13px;
+        }
+        
+        .log-entry {
+            margin: 5px 0;
+            padding: 5px 0;
+            border-bottom: 1px solid #333;
+        }
+        
+        .log-time {
+            color: #888;
+            margin-right: 10px;
+        }
+        
+        .log-info {
+            color: #4fc3f7;
+        }
+        
+        .log-warning {
+            color: #ffb74d;
+        }
+        
+        .log-error {
+            color: #ef5350;
+        }
+        
+        .file-path {
+            color: #81c784;
+            text-decoration: underline;
+            cursor: pointer;
+            transition: color 0.2s;
+        }
+        
+        .file-path:hover {
+            color: #a5d6a7;
+        }
+        
+        .options {
+            margin-bottom: 15px;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 8px;
+        }
+        
+        .option-item {
+            display: flex;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+        
+        .option-item input {
+            margin-right: 10px;
+            transform: scale(1.2);
+        }
+        
+        .status-indicator {
+            display: inline-flex;
+            align-items: center;
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 14px;
+            margin-left: 10px;
+        }
+        
+        .status-idle {
+            background: #e0e0e0;
+            color: #666;
+        }
+        
+        .status-running {
+            background: #4caf50;
+            color: white;
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
+        }
+        
+        .select-all-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+            padding: 10px;
+            background: #f0f0f0;
+            border-radius: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🐄 国家兽药基础数据库爬虫</h1>
+            <p>选择模块后点击开始下载，实时查看运行日志</p>
+        </div>
+        
+        <div class="content">
+            <div class="left-panel">
+                <div class="panel-title">📦 数据模块</div>
+                
+                <div class="select-all-bar">
+                    <label style="cursor: pointer;">
+                        <input type="checkbox" id="selectAll" onchange="toggleSelectAll()">
+                        全选/取消全选
+                    </label>
+                    <span id="selectedCount">已选择: 0</span>
+                </div>
+                
+                <div class="module-list" id="moduleList">
+                </div>
+                
+                <div class="options">
+                    <div class="option-item">
+                        <input type="checkbox" id="incremental" checked>
+                        <label for="incremental">启用增量更新（保留历史数据）</label>
+                    </div>
+                </div>
+                
+                <div class="button-group">
+                    <button class="btn btn-primary" id="startServiceBtn" onclick="startService()">
+                        🚀 启动服务
+                    </button>
+                    <button class="btn btn-secondary" id="stopServiceBtn" onclick="stopService()" disabled>
+                        ⏹ 停止服务
+                    </button>
+                    <button class="btn btn-primary" id="startBtn" onclick="startCrawl()" disabled>
+                        📥 开始下载数据
+                    </button>
+                    <button class="btn btn-secondary" id="stopBtn" onclick="stopCrawl()" disabled>
+                        ⏹ 停止下载
+                    </button>
+                    <button class="btn btn-secondary" onclick="openDataDir()">
+                        📂 打开数据目录
+                    </button>
+                    <span class="status-indicator status-idle" id="statusIndicator">
+                        空闲
+                    </span>
+                </div>
+            </div>
+            
+            <div class="right-panel">
+                <div class="panel-title">📋 运行日志</div>
+                <div class="log-container" id="logContainer">
+                    <div class="log-entry log-info">
+                        <span class="log-time">[系统]</span> 等待开始...
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const modules = {
+            'syscqyinfo': '兽药生产企业数据',
+            'distributor': '兽药经营企业数据',
+            'sycppzwh': '兽药产品批准文号数据',
+            'jksyby': '进口兽用生物制品批签发数据',
+            'syswzppqfgl': '国产兽用生物制品批签发数据',
+            'hyjdcjjg': '化药监督抽检结果数据',
+            'syjdcjjg': '生药监督抽检结果数据',
+            'lcsysp': '临床试验审批数据',
+            'gnxsyzc': '国内新兽药注册数据',
+            'jksyzc': '进口兽药注册数据',
+            'gnsybqsms': '国内兽药说明书数据',
+            'jksybqsms': '进口兽药说明书数据',
+            'sygjbz': '兽药国家标准数据',
+            'companyIntegrityRecord': '兽用抗菌药使用减量化达标养殖场'
+        };
+        
+        let isRunning = false;
+        let isServiceRunning = false;
+        let isCrawling = false;
+        
+        // 初始化模块列表
+        function initModuleList() {
+            const moduleList = document.getElementById('moduleList');
+            moduleList.innerHTML = '';
+            
+            Object.entries(modules).forEach(([code, name]) => {
+                const item = document.createElement('div');
+                item.className = 'module-item';
+                item.innerHTML = `
+                    <input type="checkbox" id="module_${code}" value="${code}">
+                    <label for="module_${code}">${name}</label>
+                `;
+                item.querySelector('input').addEventListener('change', updateSelectedCount);
+                moduleList.appendChild(item);
+            });
+        }
+        
+        // 全选/取消全选
+        function toggleSelectAll() {
+            const selectAll = document.getElementById('selectAll');
+            const checkboxes = document.querySelectorAll('.module-item input');
+            checkboxes.forEach(cb => {
+                cb.checked = selectAll.checked;
+                const item = cb.closest('.module-item');
+                if (cb.checked) {
+                    item.classList.add('selected');
+                } else {
+                    item.classList.remove('selected');
+                }
+            });
+            updateSelectedCount();
+        }
+        
+        // 更新选中计数
+        function updateSelectedCount() {
+            const checkboxes = document.querySelectorAll('.module-item input');
+            let selectedCount = 0;
+            checkboxes.forEach(cb => {
+                const item = cb.closest('.module-item');
+                if (cb.checked) {
+                    item.classList.add('selected');
+                    selectedCount++;
+                } else {
+                    item.classList.remove('selected');
+                }
+            });
+            document.getElementById('selectedCount').textContent = `已选择: ${selectedCount}`;
+        }
+        
+        // 获取选中的模块
+        function getSelectedModules() {
+            const checkboxes = document.querySelectorAll('.module-item input:checked');
+            return Array.from(checkboxes).map(cb => cb.value);
+        }
+        
+        // 添加日志
+        function addLog(type, message, time) {
+            const logContainer = document.getElementById('logContainer');
+            const entry = document.createElement('div');
+            entry.className = `log-entry log-${type}`;
+            
+            // 检测文件路径并使其可点击
+            let displayMessage = message;
+            const pathMatch = message.match(/(data[\/\\][^:\s]+\.(?:csv|json))/i);
+            if (pathMatch) {
+                const filePath = pathMatch[1];
+                displayMessage = message.replace(filePath, 
+                    `<span class="file-path" onclick="openDataDir()" title="点击打开目录">${filePath}</span>`);
+            }
+            
+            entry.innerHTML = `<span class="log-time">[${time}]</span> ${displayMessage}`;
+            logContainer.appendChild(entry);
+            logContainer.scrollTop = logContainer.scrollHeight;
+        }
+        
+        // 打开数据目录
+        async function openDataDir() {
+            try {
+                await window.electronAPI.openDirectory();
+                addLog('info', '数据目录已打开', new Date().toLocaleTimeString('zh-CN', { hour12: false }));
+            } catch (error) {
+                addLog('error', '打开目录失败: ' + error.message, new Date().toLocaleTimeString('zh-CN', { hour12: false }));
+            }
+        }
+        
+        // 更新按钮状态
+        function updateButtonStates() {
+            const startServiceBtn = document.getElementById('startServiceBtn');
+            const stopServiceBtn = document.getElementById('stopServiceBtn');
+            const startBtn = document.getElementById('startBtn');
+            const stopBtn = document.getElementById('stopBtn');
+            const indicator = document.getElementById('statusIndicator');
+            
+            // 服务按钮
+            if (isServiceRunning) {
+                startServiceBtn.disabled = true;
+                startServiceBtn.textContent = '🚀 服务运行中';
+                stopServiceBtn.disabled = false;
+                stopServiceBtn.textContent = '⏹ 停止服务';
+                startBtn.disabled = false;
+                startBtn.textContent = '📥 开始下载数据';
+            } else {
+                startServiceBtn.disabled = false;
+                startServiceBtn.textContent = '🚀 启动服务';
+                stopServiceBtn.disabled = true;
+                stopServiceBtn.textContent = '⏹ 停止服务';
+                startBtn.disabled = true;
+                startBtn.textContent = '📥 开始下载数据';
+                stopBtn.disabled = true;
+                stopBtn.textContent = '⏹ 停止下载';
+            }
+            
+            // 下载按钮
+            if (isCrawling) {
+                stopBtn.disabled = false;
+                stopBtn.textContent = '⏹ 停止下载';
+                startBtn.disabled = true;
+                startBtn.textContent = '⏳ 下载中...';
+                indicator.className = 'status-indicator status-running';
+                indicator.textContent = '下载中';
+            } else if (isServiceRunning) {
+                stopBtn.disabled = true;
+                stopBtn.textContent = '⏹ 停止下载';
+                startBtn.disabled = false;
+                startBtn.textContent = '📥 开始下载数据';
+                indicator.className = 'status-indicator status-idle';
+                indicator.textContent = '空闲';
+            } else {
+                stopBtn.disabled = true;
+                stopBtn.textContent = '⏹ 停止下载';
+                startBtn.disabled = true;
+                startBtn.textContent = '📥 开始下载数据';
+                indicator.className = 'status-indicator status-idle';
+                indicator.textContent = '服务未启动';
+            }
+        }
+        
+        // 启动服务
+        async function startService() {
+            try {
+                const startServiceBtn = document.getElementById('startServiceBtn');
+                startServiceBtn.disabled = true;
+                startServiceBtn.textContent = '⏳ 启动中...';
+                
+                const result = await window.electronAPI.startService();
+                
+                if (result.success) {
+                    isServiceRunning = true;
+                    addLog('info', result.message, new Date().toLocaleTimeString('zh-CN', { hour12: false }));
+                } else {
+                    addLog('error', result.error || '服务启动失败', new Date().toLocaleTimeString('zh-CN', { hour12: false }));
+                    isServiceRunning = false;
+                }
+                
+                updateButtonStates();
+            } catch (error) {
+                addLog('error', '启动服务失败: ' + error.message, new Date().toLocaleTimeString('zh-CN', { hour12: false }));
+                isServiceRunning = false;
+                updateButtonStates();
+            }
+        }
+        
+        // 停止服务
+        async function stopService() {
+            try {
+                const stopServiceBtn = document.getElementById('stopServiceBtn');
+                stopServiceBtn.disabled = true;
+                stopServiceBtn.textContent = '⏳ 停止中...';
+                
+                // 先停止爬虫
+                if (isCrawling) {
+                    await window.electronAPI.stopCrawl();
+                }
+                
+                const result = await window.electronAPI.stopService();
+                
+                if (!result.success) {
+                    addLog('error', result.error || '停止服务失败', new Date().toLocaleTimeString('zh-CN', { hour12: false }));
+                }
+                
+                updateButtonStates();
+            } catch (error) {
+                addLog('error', '停止服务失败: ' + error.message, new Date().toLocaleTimeString('zh-CN', { hour12: false }));
+                updateButtonStates();
+            }
+        }
+        
+        // 开始爬取
+        async function startCrawl() {
+            if (!isServiceRunning) {
+                addLog('error', '请先启动爬虫服务！', new Date().toLocaleTimeString('zh-CN', { hour12: false }));
+                return;
+            }
+            
+            if (isCrawling) {
+                addLog('warning', '任务正在运行中，请等待...', new Date().toLocaleTimeString('zh-CN', { hour12: false }));
+                return;
+            }
+            
+            const selectedModules = getSelectedModules();
+            if (selectedModules.length === 0) {
+                addLog('error', '请至少选择一个模块！', new Date().toLocaleTimeString('zh-CN', { hour12: false }));
+                return;
+            }
+            
+            const incremental = document.getElementById('incremental').checked;
+            
+            try {
+                const result = await window.electronAPI.startCrawl(selectedModules, incremental);
+                
+                if (result.success) {
+                    addLog('info', result.message || '任务已启动', new Date().toLocaleTimeString('zh-CN', { hour12: false }));
+                    isCrawling = true;
+                    updateButtonStates();
+                } else {
+                    addLog('error', result.error || '启动任务失败', new Date().toLocaleTimeString('zh-CN', { hour12: false }));
+                }
+            } catch (error) {
+                addLog('error', '请求失败: ' + error.message, new Date().toLocaleTimeString('zh-CN', { hour12: false }));
+            }
+        }
+        
+        // 停止爬取
+        async function stopCrawl() {
+            try {
+                const stopBtn = document.getElementById('stopBtn');
+                stopBtn.disabled = true;
+                stopBtn.textContent = '⏳ 停止中...';
+                
+                const result = await window.electronAPI.stopCrawl();
+                
+                if (!result.success) {
+                    addLog('error', result.error || '停止任务失败', new Date().toLocaleTimeString('zh-CN', { hour12: false }));
+                }
+                
+                updateButtonStates();
+            } catch (error) {
+                addLog('error', '停止任务失败: ' + error.message, new Date().toLocaleTimeString('zh-CN', { hour12: false }));
+                updateButtonStates();
+            }
+        }
+        
+        // 初始化标志
+        let initialized = false;
+        
+        // 初始化
+        document.addEventListener('DOMContentLoaded', async function() {
+            // 防止重复初始化
+            if (initialized) {
+                return;
+            }
+            initialized = true;
+            
+            initModuleList();
+            
+            // 设置日志监听（从一开始就设置）
+            window.electronAPI.onCrawlerLog((data) => {
+                const time = new Date().toLocaleTimeString('zh-CN', { hour12: false });
+                addLog(data.type || 'info', data.message, time);
+            });
+            
+            // 检查初始状态
+            try {
+                const status = await window.electronAPI.getServiceStatus();
+                isServiceRunning = status.running;
+                isCrawling = status.crawling;
+                updateButtonStates();
+                
+                if (isServiceRunning) {
+                    addLog('info', '检测到服务已在运行', new Date().toLocaleTimeString('zh-CN', { hour12: false }));
+                } else {
+                    addLog('info', '请点击"启动服务"按钮开始', new Date().toLocaleTimeString('zh-CN', { hour12: false }));
+                }
+            } catch (error) {
+                console.error('获取服务状态失败:', error);
+                updateButtonStates();
+            }
+            
+            // 只注册一次事件监听器
+            if (window.electronAPI.onServiceStatus) {
+                window.electronAPI.onServiceStatus((data) => {
+                    // 避免重复处理相同的状态
+                    if (isServiceRunning !== data.running) {
+                        isServiceRunning = data.running;
+                        updateButtonStates();
+                    }
+                });
+            }
+            
+            if (window.electronAPI.onCrawlerStatus) {
+                window.electronAPI.onCrawlerStatus((data) => {
+                    // 避免重复处理相同的状态
+                    if (isCrawling !== data.running) {
+                        isCrawling = data.running;
+                        updateButtonStates();
+                    }
+                });
+            }
+        });
+    </script>
+</body>
+</html>
